@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace documentvaultapi.Controllers
 {
     [ApiController]
-    [Route("api/Documents")]
+    [Route("api/Bucket")]
     public class BucketController : ControllerBase
     {
         private readonly IBucketService _bucketService;

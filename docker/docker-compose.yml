@@ -13,12 +13,27 @@ services:
       POSTGRES_USER: documentvault
       POSTGRES_PASSWORD: documentvault
     ports:
-      - "5440:5432"
+      - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     networks:
       - documentvault-network
-
+  # =========================
+  # pgAdmin (PostgreSQL UI)
+  # =========================
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: documentvault-pgadmin
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - "8080:80"
+    depends_on:
+      - postgres
+    networks:
+      - documentvault-network
   # =========================
   # MinIO (Object Storage)
   # =========================

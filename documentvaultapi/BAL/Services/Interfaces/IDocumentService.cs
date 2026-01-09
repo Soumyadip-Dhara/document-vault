@@ -10,5 +10,7 @@ namespace documentvaultapi.BAL.Services.Interfaces
             long? createdBy);
         Task<(Stream Stream, string ContentType, string FileName)>DownloadAsync(Guid documentId);
         //Task<DocumentDownloadResponseDTO> GetDownloadUrlAsync(Guid documentId);
+
+        Task<bool> DeleteDocumentAsync(Guid documentId);
     }
 }

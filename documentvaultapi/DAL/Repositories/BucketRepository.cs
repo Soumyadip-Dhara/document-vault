@@ -7,7 +7,7 @@ using Minio.DataModel.Args;
 namespace documentvaultapi.DAL.Repositories
 {
     public class BucketRepository
-        : Repository<documents, DocumentVaultDbContext>, IBucketRepository
+        : Repository<Documents, DocumentVaultDbContext>, IBucketRepository
 
     {
         private readonly IMinioClient _minioClient;

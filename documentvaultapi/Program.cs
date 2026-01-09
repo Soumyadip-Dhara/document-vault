@@ -5,6 +5,7 @@ using documentvaultapi.DAL.Repositories.Interfaces;
 using documentvaultapi.DAL.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Minio;
+using documentvaultapi.Filters;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -21,12 +22,20 @@ builder.Services.AddDbContext<DocumentVaultDbContext>(options =>
 // =======================
 builder.Services.AddScoped<IDocumentRepository, DocumentRepository>();
 builder.Services.AddScoped<IBucketRepository, BucketRepository>();
+builder.Services.AddScoped<IApplicationMapRepository, ApplicationMapRepository>();
 
 // =======================
 // Services
 // =======================
 builder.Services.AddScoped<IDocumentService, DocumentService>();
 builder.Services.AddScoped<IBucketService, BucketService>();
+
+
+// =======================
+// Filters
+// =======================
+builder.Services.AddScoped<ApplicationAuthFilter>();
+
 
 // =======================
 // MinIO client  ✅ ADD HERE

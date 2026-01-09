@@ -3,10 +3,12 @@ using documentvaultapi.DAL.DTOs;
 using documentvaultapi.Helper;
 using documentvaultapi.Enum;
 using Microsoft.AspNetCore.Mvc;
+using documentvaultapi.Filters;
 
 namespace documentvaultapi.Controllers
 {
     [ApiController]
+    [ServiceFilter(typeof(ApplicationAuthFilter))]
     [Route("api/Documents")]
     public class DocumentController : ControllerBase
     {
@@ -34,6 +36,17 @@ namespace documentvaultapi.Controllers
                 response.apiResponseStatus = APIResponseStatus.Success;
                 response.message = "Document uploaded successfully";
                 response.result = result;
+            }
+            catch (DuplicateDocumentException ex)
+            {
+                response.apiResponseStatus = APIResponseStatus.Warning;
+                response.message = "Duplicate document detected";
+
+                response.result = new DocumentUploadResponseDTO
+                {
+                    DocumentId = ex.ExistingDocumentId,
+                    Status = "Duplicate"
+                };
             }
             catch (Exception ex)
             {
@@ -84,5 +97,30 @@ namespace documentvaultapi.Controllers
         //        return response;
         //    }
         //}
+
+        [HttpDelete("DeleteDocument")]
+        public async Task<APIResponseClass<string>> DeleteDocument(
+    //[FromHeader(Name = "client_secret")] Guid clientSecret,
+    //[FromHeader(Name = "app_id")] long appId,
+    [FromQuery(Name = "documentId")] Guid documentId)
+        {
+            APIResponseClass<string> response = new();
+
+            try
+            {
+                await _documentservice.DeleteDocumentAsync(documentId);
+
+                response.apiResponseStatus = APIResponseStatus.Success;
+                response.message = "Document deleted successfully: " + documentId;
+                response.result = "DONE";
+            }
+            catch (Exception ex)
+            {
+                response.apiResponseStatus = APIResponseStatus.Error;
+                response.message = ex.Message;
+            }
+
+            return response;
+        }
     }
 }
