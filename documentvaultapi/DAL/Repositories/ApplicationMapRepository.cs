@@ -31,7 +31,7 @@ namespace documentvaultapi.DAL.Repositories
                 .FirstOrDefaultAsync(x =>
                     x.AppId == appId &&
                     x.ClientSecret == clientSecret &&
-                    x.BaseUrl == callerBaseUrl &&
+                    //x.BaseUrl == callerBaseUrl &&
                     x.IsActive == true);
 
             return Res;

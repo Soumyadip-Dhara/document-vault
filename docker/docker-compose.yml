@@ -1,3 +1,201 @@
+# version: "3.8"
+
+# services:
+#   # =========================
+#   # PostgreSQL
+#   # =========================
+#   postgres:
+#     image: postgres:15
+#     container_name: documentvault-postgres
+#     restart: unless-stopped
+#     environment:
+#       POSTGRES_DB: documentvaultdb
+#       POSTGRES_USER: documentvault
+#       POSTGRES_PASSWORD: documentvault
+#     ports:
+#       - "5432:5432"
+#     volumes:
+#       - pgdata:/var/lib/postgresql/data
+#     networks:
+#       - documentvault-network
+#   # =========================
+#   # pgAdmin (PostgreSQL UI)
+#   # =========================
+#   pgadmin:
+#     image: dpage/pgadmin4
+#     container_name: documentvault-pgadmin
+#     restart: unless-stopped
+#     environment:
+#       PGADMIN_DEFAULT_EMAIL: admin@admin.com
+#       PGADMIN_DEFAULT_PASSWORD: admin
+#     ports:
+#       - "8080:80"
+#     depends_on:
+#       - postgres
+#     networks:
+#       - documentvault-network
+#   # =========================
+#   # MinIO (Object Storage)
+#   # =========================
+#   minio:
+#     image: minio/minio
+#     container_name: documentvault-minio
+#     restart: unless-stopped
+#     command: server /data --console-address ":9001"
+#     environment:
+#       MINIO_ROOT_USER: minioadmin
+#       MINIO_ROOT_PASSWORD: minioadmin
+#     ports:
+#       - "9000:9000"
+#       - "9001:9001"
+#     volumes:
+#       - miniodata:/data
+#     networks:
+#       - documentvault-network
+
+#   # =========================
+#   # Document Vault API
+#   # =========================
+#   documentvaultapi:
+#     build:
+#       context: ../documentvaultapi
+#       dockerfile: Dockerfile
+#     container_name: documentvault-api
+#     restart: unless-stopped
+#     ports:
+#       - "5000:8080"
+#     environment:
+#       ASPNETCORE_ENVIRONMENT: Development
+#       ASPNETCORE_URLS: http://+:8080
+
+#       # 🔑 MUST MATCH Program.cs
+#       ConnectionStrings__DocumentVaultDB: Host=postgres;Port=5432;Database=documentvaultdb;Username=documentvault;Password=documentvault
+
+#       # MinIO configuration
+#       Minio__Endpoint: minio:9000
+#       Minio__PublicEndpoint: localhost:9000
+#       Minio__AccessKey: minioadmin
+#       Minio__SecretKey: minioadmin
+#       Minio__Bucket: documents
+#     depends_on:
+#       - postgres
+#       - minio
+#     networks:
+#       - documentvault-network
+
+#   # =========================
+#   # Frontend UI
+#   # =========================
+#   documentvaultui:
+#     build:
+#       context: ../documentvaultui
+#       dockerfile: Dockerfile
+#     container_name: documentvault-ui
+#     restart: unless-stopped
+#     ports:
+#       - "4200:80"
+#     depends_on:
+#       - documentvaultapi
+#     networks:
+#       - documentvault-network
+
+# # =========================
+# # Networks
+# # =========================
+# networks:
+#   documentvault-network:
+#     driver: bridge
+
+# # =========================
+# # Volumes
+# # =========================
+# volumes:
+#   pgdata:
+#   miniodata:
+
+
+# # version: "3.8"
+
+# # services:
+# #   postgres:
+# #     image: postgres:15
+# #     container_name: documentvault-postgres
+# #     restart: unless-stopped
+# #     environment:
+# #       POSTGRES_DB: documentvaultdb
+# #       POSTGRES_USER: documentvault
+# #       POSTGRES_PASSWORD: documentvault
+# #     ports:
+# #       - "5432:5432"
+# #     volumes:
+# #       - pgdata:/var/lib/postgresql/data
+# #     networks:
+# #       - documentvault-network
+
+# #   minio:
+# #     image: minio/minio
+# #     container_name: documentvault-minio
+# #     restart: unless-stopped
+# #     command: server /data --console-address ":9001"
+# #     environment:
+# #       MINIO_ROOT_USER: minioadmin
+# #       MINIO_ROOT_PASSWORD: minioadmin
+# #     ports:
+# #       - "9000:9000"
+# #       - "9001:9001"
+# #     volumes:
+# #       - miniodata:/data
+# #     networks:
+# #       - documentvault-network
+
+# #   documentvaultapi:
+# #     build:
+# #       context: ../documentvaultapi
+# #       dockerfile: Dockerfile
+# #     container_name: documentvault-api
+# #     ports:
+# #       - "5000:8080"
+# #     environment:
+# #       ASPNETCORE_ENVIRONMENT: Development
+# #       ASPNETCORE_URLS: http://+:8080
+
+# #       # PostgreSQL (IMPORTANT: service name, not localhost)
+# #       ConnectionStrings__Default: Host=postgres;Port=5432;Database=documentvaultdb;Username=documentvault;Password=documentvault
+
+# #       # MinIO
+# #       Minio__Endpoint: minio:9000
+# #       Minio__AccessKey: minioadmin
+# #       Minio__SecretKey: minioadmin
+# #       Minio__Bucket: documents
+# #     depends_on:
+# #       - postgres
+# #       - minio
+# #     networks:
+# #       - documentvault-network
+# #     restart: unless-stopped
+
+# #   documentvaultui:
+# #     build:
+# #       context: ../documentvaultui
+# #       dockerfile: Dockerfile
+# #     container_name: documentvault-ui
+# #     ports:
+# #       - "4200:80"
+# #     depends_on:
+# #       - documentvaultapi
+# #     networks:
+# #       - documentvault-network
+# #     restart: unless-stopped
+
+# # networks:
+# #   documentvault-network:
+# #     driver: bridge
+
+# # volumes:
+# #   pgdata:
+# #   miniodata:
+
+
 version: "3.8"
 
 services:
@@ -18,6 +216,7 @@ services:
       - pgdata:/var/lib/postgresql/data
     networks:
       - documentvault-network
+
   # =========================
   # pgAdmin (PostgreSQL UI)
   # =========================
@@ -34,6 +233,7 @@ services:
       - postgres
     networks:
       - documentvault-network
+
   # =========================
   # MinIO (Object Storage)
   # =========================
@@ -54,6 +254,22 @@ services:
       - documentvault-network
 
   # =========================
+  # RabbitMQ (Message Broker)
+  # =========================
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: documentvault-rabbitmq
+    restart: unless-stopped
+    ports:
+      - "5672:5672"     # AMQP
+      - "15672:15672"   # Management UI
+    environment:
+      RABBITMQ_DEFAULT_USER: rabbitmq
+      RABBITMQ_DEFAULT_PASS: rabbitmq
+    networks:
+      - documentvault-network
+
+  # =========================
   # Document Vault API
   # =========================
   documentvaultapi:
@@ -68,18 +284,26 @@ services:
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_URLS: http://+:8080
 
-      # 🔑 MUST MATCH Program.cs
+      # PostgreSQL
       ConnectionStrings__DocumentVaultDB: Host=postgres;Port=5432;Database=documentvaultdb;Username=documentvault;Password=documentvault
 
-      # MinIO configuration
+      # MinIO
       Minio__Endpoint: minio:9000
       Minio__PublicEndpoint: localhost:9000
       Minio__AccessKey: minioadmin
       Minio__SecretKey: minioadmin
       Minio__Bucket: documents
+
+      # RabbitMQ
+      RabbitMQ__Host: rabbitmq
+      RabbitMQ__Port: 5672
+      RabbitMQ__Username: rabbitmq
+      RabbitMQ__Password: rabbitmq
+
     depends_on:
       - postgres
       - minio
+      - rabbitmq
     networks:
       - documentvault-network
 
@@ -112,85 +336,3 @@ networks:
 volumes:
   pgdata:
   miniodata:
-
-
-# version: "3.8"
-
-# services:
-#   postgres:
-#     image: postgres:15
-#     container_name: documentvault-postgres
-#     restart: unless-stopped
-#     environment:
-#       POSTGRES_DB: documentvaultdb
-#       POSTGRES_USER: documentvault
-#       POSTGRES_PASSWORD: documentvault
-#     ports:
-#       - "5432:5432"
-#     volumes:
-#       - pgdata:/var/lib/postgresql/data
-#     networks:
-#       - documentvault-network
-
-#   minio:
-#     image: minio/minio
-#     container_name: documentvault-minio
-#     restart: unless-stopped
-#     command: server /data --console-address ":9001"
-#     environment:
-#       MINIO_ROOT_USER: minioadmin
-#       MINIO_ROOT_PASSWORD: minioadmin
-#     ports:
-#       - "9000:9000"
-#       - "9001:9001"
-#     volumes:
-#       - miniodata:/data
-#     networks:
-#       - documentvault-network
-
-#   documentvaultapi:
-#     build:
-#       context: ../documentvaultapi
-#       dockerfile: Dockerfile
-#     container_name: documentvault-api
-#     ports:
-#       - "5000:8080"
-#     environment:
-#       ASPNETCORE_ENVIRONMENT: Development
-#       ASPNETCORE_URLS: http://+:8080
-
-#       # PostgreSQL (IMPORTANT: service name, not localhost)
-#       ConnectionStrings__Default: Host=postgres;Port=5432;Database=documentvaultdb;Username=documentvault;Password=documentvault
-
-#       # MinIO
-#       Minio__Endpoint: minio:9000
-#       Minio__AccessKey: minioadmin
-#       Minio__SecretKey: minioadmin
-#       Minio__Bucket: documents
-#     depends_on:
-#       - postgres
-#       - minio
-#     networks:
-#       - documentvault-network
-#     restart: unless-stopped
-
-#   documentvaultui:
-#     build:
-#       context: ../documentvaultui
-#       dockerfile: Dockerfile
-#     container_name: documentvault-ui
-#     ports:
-#       - "4200:80"
-#     depends_on:
-#       - documentvaultapi
-#     networks:
-#       - documentvault-network
-#     restart: unless-stopped
-
-# networks:
-#   documentvault-network:
-#     driver: bridge
-
-# volumes:
-#   pgdata:
-#   miniodata:

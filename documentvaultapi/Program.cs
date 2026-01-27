@@ -32,13 +32,21 @@ builder.Services.AddScoped<IBucketService, BucketService>();
 
 
 // =======================
+// RabbitMQ
+// =======================
+//builder.Services
+//   .AddRabbitMQ(builder.Configuration)
+//   .AddMessageProcessing();
+
+
+// =======================
 // Filters
 // =======================
 builder.Services.AddScoped<ApplicationAuthFilter>();
 
 
 // =======================
-// MinIO client  ✅ ADD HERE
+// MinIO client  
 // =======================
 builder.Services.AddSingleton<IMinioClient>(sp =>
 {
