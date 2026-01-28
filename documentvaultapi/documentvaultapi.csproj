@@ -6,7 +6,15 @@
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
 
+  <ItemGroup>
+    <Compile Remove="RabbitMQ\**" />
+    <Content Remove="RabbitMQ\**" />
+    <EmbeddedResource Remove="RabbitMQ\**" />
+    <None Remove="RabbitMQ\**" />
+  </ItemGroup>
+
 	<ItemGroup>
+		<PackageReference Include="AutoMapper" Version="16.0.0" />
 		<PackageReference Include="FluentValidation" Version="12.1.1" />
 		<PackageReference Include="MassTransit" Version="9.0.0" />
 		<PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="8.0.*" />
@@ -27,13 +35,20 @@
 
 		<PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.*" />
 
+		<PackageReference Include="NPOI" Version="2.7.5" />
+
 		<PackageReference Include="RabbitMQ.Client" Version="7.2.0" />
 
 		<PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
 	</ItemGroup>
 
 	<ItemGroup>
-	  <Folder Include="RabbitMQ\Models\" />
+	  <Folder Include="RbbitMQ\Models\" />
+	  <Folder Include="RbbitMQ\Consumers\" />
+	  <Folder Include="RbbitMQ\Interfaces\" />
+	  <Folder Include="RbbitMQ\Extensions\" />
+	  <Folder Include="RbbitMQ\Repositories\" />
+	  <Folder Include="RbbitMQ\Validators\" />
 	</ItemGroup>
 
 
