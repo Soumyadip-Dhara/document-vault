@@ -9,8 +9,10 @@
         public const string UM_APPLICATION_MAP_ACK = "usermanagement_documentstorage_application_map_ack";
 
         //Document Upload
-        public const string DOCUMENT_UPLOAD_QUEUE = "documentstorage_document_upload";
-        public const string DOCUMENT_UPLOAD_ACK = "documentstorage_document_upload_ack";
+        //public const string DOCUMENT_UPLOAD_QUEUE = "documentstorage_document_upload";
+        //public const string DOCUMENT_UPLOAD_ACK = "documentstorage_document_upload_ack";
+        public const string DOCUMENT_UPLOAD_QUEUE = "documentstorage_document_upload1";
+        public const string DOCUMENT_UPLOAD_ACK = "documentstorage_document_upload1_ack";
 
         public const string WBJIT_BILLING_BILL_RECV = "wbjit_billing_cts_bill_send_to_treasury";
         public const string  WBJIT_BILLING_BILL_STATUS = "wbjit_cts_billing_bill_status";

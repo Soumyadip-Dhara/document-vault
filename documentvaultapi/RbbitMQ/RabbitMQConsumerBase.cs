@@ -39,6 +39,7 @@ namespace documentvaultapi.RbbitMQ
         private IConsumedAcknowledgementLogRepository _consumedAcknowledgementLogRepo;
         private IReadOnlyBasicProperties _basicProperties;
         //private readonly IReadOnlyBasicProperties _mqBasicProperties;
+        private readonly string _virtualHostKey;
 
         protected RabbitMQConsumerBase(
             ILogger logger,
@@ -48,7 +49,8 @@ namespace documentvaultapi.RbbitMQ
             string queueName,
             string? exchangeName = null,
             string? routingKey = null,
-            bool isDurable = true)
+            bool isDurable = true,
+            string virtualHostKey = "Default")
         {
             _logger = logger;
             _connectionFactory = connectionFactory;
@@ -58,6 +60,7 @@ namespace documentvaultapi.RbbitMQ
             _exchangeName = exchangeName;
             _ackQueueName = $"{_queueName}_ack";
             _routingKey = routingKey;
+            _virtualHostKey = virtualHostKey;
             //_mqBasicProperties = mqBasicProperties;
             _jsonOptions = new JsonSerializerOptions
             {
@@ -91,8 +94,9 @@ namespace documentvaultapi.RbbitMQ
 
         private async Task ConnectAndConsume(CancellationToken stoppingToken)
         {
-            _connection = await _connectionFactory.CreateConnectionAsync(stoppingToken);
-            _channel = await _connectionFactory.CreateChannelAsync(stoppingToken);
+            _connection = await _connectionFactory.CreateConnectionAsync(_virtualHostKey, stoppingToken);
+            _channel = await _connectionFactory.CreateChannelAsync(_virtualHostKey, stoppingToken);
+
 
             // Configure channel
             await _channel.QueueDeclareAsync(_queueName,
@@ -167,16 +171,21 @@ namespace documentvaultapi.RbbitMQ
                 _logger.LogInformation("Processing message. Redelivered: {IsRedelivered}", isRedelivered);
                 if (await ProcessMessageAsync())
                 {
-                    _channel?.BasicAckAsync(ea.DeliveryTag, false);
+                    await _channel.BasicAckAsync(ea.DeliveryTag, false)!;
                 }
                 else
                 {
-                    _channel?.BasicNackAsync(ea.DeliveryTag, false, !isRedelivered);
+                    await _channel.BasicNackAsync(ea.DeliveryTag, false, !isRedelivered)!;
                 }
             }
             catch (Exception ex)
             {
                 await FailedProcess("ProcessingError", ex.ToString(), false, ConsumeStatusEnums.PENDING);
+                // Ensure the message is NACKed even if an exception occurs
+                if (_channel != null)
+                {
+                    await _channel.BasicNackAsync(ea.DeliveryTag, false, false);
+                }
             }
         }
 
@@ -230,8 +239,8 @@ namespace documentvaultapi.RbbitMQ
             }
             catch (Exception ex)
             {
-                await FailedProcess("ProcessingError", ex.ToString(), false, ConsumeStatusEnums.PENDING);
-                return false;
+                await FailedProcess("ProcessingError", ex.Message, true, ConsumeStatusEnums.NO_ACTION);
+                return true;
             }
         }
 
@@ -310,7 +319,7 @@ namespace documentvaultapi.RbbitMQ
                 basicProperties = new BasicProperties
                 {
                     MessageId = ackMessageId,
-                    //AppId = ((int)AppId.WbJitCTS).ToString(),
+                    AppId = "1", // HardCoded for UserManagement
                     CorrelationId = _basicProperties.CorrelationId,
                 };
 

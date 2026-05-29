@@ -43,16 +43,56 @@ namespace documentvaultapi.Extensions
          this IServiceCollection services,
          IConfiguration configuration)
         {
-            var rabbitMQConfig = configuration.GetSection("RabbitMQConnection").Get<RabbitMQConfigurationModel>();
-            if (rabbitMQConfig == null)
+            //var rabbitMQConfig = configuration.GetSection("RabbitMQConnection").Get<RabbitMQConfigurationModel>();
+            //if (rabbitMQConfig == null)
+            //{
+            //    throw new InvalidOperationException("RabbitMQ configuration is missing");
+            //}
+
+            //services.AddSingleton(rabbitMQConfig);
+            //services.AddSingleton<IRabbitMQConnectionFactory, RabbitMQConnectionFactory>();
+
+            //return services;
+
+
+            // Try new multi-host format first: "RabbitMQConnections"
+            var hosts = configuration.GetSection("RabbitMQConnections")
+                .Get<Dictionary<string, RabbitMQConfigurationModel>>();
+
+            // Fallback to old single-host format: "RabbitMQConnection"
+            if (hosts == null || hosts.Count == 0)
             {
-                throw new InvalidOperationException("RabbitMQ configuration is missing");
+                var singleConfig = configuration.GetSection("RabbitMQConnection")
+                    .Get<RabbitMQConfigurationModel>();
+
+                if (singleConfig == null)
+                {
+                    throw new InvalidOperationException(
+                        "RabbitMQ configuration is missing. Ensure 'RabbitMQConnections' or 'RabbitMQConnection' section exists in appsettings.");
+                }
+
+                hosts = new Dictionary<string, RabbitMQConfigurationModel>
+                {
+                    { "Default", singleConfig }
+                };
             }
 
-            services.AddSingleton(rabbitMQConfig);
+            var multiConfig = new RabbitMQMultiHostConfiguration { Hosts = hosts };
+
+            services.AddSingleton(multiConfig);
+
+            // Register default single config for backward compatibility (used by RabbitMqService)
+            //if (hosts.TryGetValue("Default", out var defaultConfig))
+            //{
+
+            //    services.AddSingleton(defaultConfig);
+            //}
+
+
             services.AddSingleton<IRabbitMQConnectionFactory, RabbitMQConnectionFactory>();
 
             return services;
+
         }
 
         public static IServiceCollection AddMessageProcessing(
@@ -64,99 +104,11 @@ namespace documentvaultapi.Extensions
             services.AddHostedService<ApplicationMapConsumer>();
 
             //// Document Upload Processing
-            //services.AddScoped<IValidator<DocumentUploadMessageDTO>, DocumentUploadMessageValidator>();
-            //services.AddScoped<IMessageProcessor<DocumentUploadMessageDTO>, DocumentUploadQueueService>();
-            //services.AddHostedService<DocumentUploadConsumer>();
+            services.AddScoped<IValidator<DocumentUploadMessageDTO>, DocumentUploadMessageValidator>();
+            services.AddScoped<IMessageProcessor<DocumentUploadMessageDTO>, DocumentUploadQueueService>();
+            services.AddHostedService<DocumentUploadConsumer>();
 
-            //services.AddScoped<IValidator<OrderMessage>, OrderMessageValidator>();
-            //services.AddScoped<IMessageProcessor<OrderMessage>, OrderMessageProcessor>();
-            //services.AddHostedService<OrderConsumerService>();
-
-            //// For JIT-Billing Bill Receive
-            //services.AddScoped<IValidator<eJitBillDetail>, eBillDetailValidator>();
-            //services.AddScoped<IMessageProcessor<eJitBillDetail>, JitBillQueueService>();
-            //services.AddHostedService<JitBillConsumer>();
-
-            //// For e-Billing Bill Receive
-            ////services.AddScoped<IValidator<eBillDetail>, NormalBillDetailValidator>();
-            ////services.AddScoped<IMessageProcessor<eBillDetail>, EBillingQueueService>();
-            ////services.AddHostedService<NormalBillConsumer>();
-
-            //services.AddScoped<IValidator<ActiveHoaMasterDTOs>, ActiveHoaMasterValidator>();
-            //services.AddScoped<IMessageProcessor<ActiveHoaMasterDTOs>, ActiveHoaMasterQueueService>();
-            ////services.AddHostedService<ActiveHoaMasterConsumer>();
-            //services.AddHostedService<JitActiveHoaMasterConsumer>();
-
-            //services.AddScoped<IValidator<JitSchemeConfigDTOs>, SchemeConfigValidator>();
-            //services.AddScoped<IMessageProcessor<JitSchemeConfigDTOs>, SchemeConfigQueueService>();
-            //services.AddHostedService<SchemeConfigConsumer>();
-
-            //// For e-Billing
-            ////services.AddScoped<IValidator<List<DDOAllotmentDTOs>>, DDOAllotmentMasterValidator>();
-            ////services.AddScoped<IMessageProcessor<List<DDOAllotmentDTOs>>, DDOAllotmentMasterQueueService>();
-            ////services.AddHostedService<DDOAllotmentMasterConsumer>();
-
-            //// For JIT-Billing
-            //services.AddScoped<IValidator<List<JitDDOAllotmentDTOs>>, JitDDOAllotmentMasterValidator>();
-            //services.AddScoped<IMessageProcessor<List<JitDDOAllotmentDTOs>>, JitDDOAllotmentMasterQueueService>();
-            //services.AddHostedService<JitDDOAllotmentMasterConsumer>();
-
-            //// For JIT-Billing
-            //services.AddScoped<IValidator<List<DDOAllotmentWithdrawalDTOs>>, JitDDOAllotmentWithdrawalValidator>();
-            //services.AddScoped<IMessageProcessor<List<DDOAllotmentWithdrawalDTOs>>, JitDDOAllotmentWithdrawalQueueService>();
-            //services.AddHostedService<JitDDOAllotmentWithdrawalConsumer>();
-            ////For Master
-            //services.AddScoped<IValidator<MasterToCtsFinancialYearDTOs>, MasterToCtsFinancialYearValidator>();
-            //services.AddScoped<IMessageProcessor<MasterToCtsFinancialYearDTOs>, MasterToCtsFinancialYearQueueService>();
-            //services.AddHostedService<MasterToCtsFinancialYearConsumer>();
-
-            //services.AddScoped<IValidator<MasterToCtsRbiIfscStockDTOs>, MasterToCtsRbiIfscStockValidator>();
-            //services.AddScoped<IMessageProcessor<MasterToCtsRbiIfscStockDTOs>, MasterToCtsRbiIfscStockQueueService>();
-            //services.AddHostedService<MasterToCtsRbiIfscStockConsumer>();
-
-            //services.AddScoped<IValidator<MasterToCtsDdoDTOs>, MasterToCtsDdoValidator>();
-            //services.AddScoped<IMessageProcessor<MasterToCtsDdoDTOs>, MasterToCtsDdoQueueService>();
-            //services.AddHostedService<MasterToCtsDdoConsumer>();
-
-            //services.AddScoped<IValidator<MasterToCtsDepartmentDTOs>, MasterToCtsDepartmentValidator>();
-            //services.AddScoped<IMessageProcessor<MasterToCtsDepartmentDTOs>, MasterToCtsDepartmentQueueService>();
-            //services.AddHostedService<MasterToCtsDepartmentConsumer>();
-
-            //services.AddScoped<IValidator<MasterToCtsMajorHeadDTOs>, MasterToCtsMajorHeadValidator>();
-            //services.AddScoped<IMessageProcessor<MasterToCtsMajorHeadDTOs>, MasterToCtsMajorHeadQueueService>();
-            //services.AddHostedService<MasterToCtsMajorHeadConsumer>();
-
-            //services.AddScoped<IValidator<MasterToCtsMinorHeadDTOs>, MasterToCtsMinorHeadValidator>();
-            //services.AddScoped<IMessageProcessor<MasterToCtsMinorHeadDTOs>, MasterToCtsMinorHeadQueueService>();
-            //services.AddHostedService<MasterToCtsMinorHeadConsumer>();
-
-            //services.AddScoped<IValidator<MasterToCtsDetailHeadDTOs>, MasterToCtsDetailHeadValidator>();
-            //services.AddScoped<IMessageProcessor<MasterToCtsDetailHeadDTOs>, MasterToCtsDetailHeadQueueService>();
-            //services.AddHostedService<MasterToCtsDetailHeadConsumer>();
-
-            //services.AddScoped<IValidator<MasterToCtsSubDetailHeadDTOs>, MasterToCtsSubDetailHeadValidator>();
-            //services.AddScoped<IMessageProcessor<MasterToCtsSubDetailHeadDTOs>, MasterToCtsSubDetailHeadQueueService>();
-            //services.AddHostedService<MasterToCtsSubDetailHeadConsumer>();
-
-            //services.AddScoped<IValidator<MasterToCtsTreasuryDTOs>, MasterToCtsTreasuryValidator>();
-            //services.AddScoped<IMessageProcessor<MasterToCtsTreasuryDTOs>, MasterToCtsTreasuryQueueService>();
-            //services.AddHostedService<MasterToCtsTreasuryConsumer>();
-
-            //services.AddScoped<IValidator<MasterToCtsSchemeHeadDTOs>, MasterToCtsSchemeHeadValidator>();
-            //services.AddScoped<IMessageProcessor<MasterToCtsSchemeHeadDTOs>, MasterToCtsSchemeHeadQueueService>();
-            //services.AddHostedService<MasterToCtsSchemeHeadConsumer>();
-
-            //services.AddScoped<IValidator<MasterToCtsSubMajorHeadDTOs>, MasterToCtsSubMajorHeadValidator>();
-            //services.AddScoped<IMessageProcessor<MasterToCtsSubMajorHeadDTOs>, MasterToCtsSubMajorHeadQueueService>();
-            //services.AddHostedService<MasterToCtsSubMajorHeadConsumer>();
-
-            //services.AddScoped<IValidator<MasterToCtsSchemeTypeDTOs>, MasterToCtsSchemeTypeValidator>();
-            //services.AddScoped<IMessageProcessor<MasterToCtsSchemeTypeDTOs>, MasterToCtsSchemeTypeQueueService>();
-            //services.AddHostedService<MasterToCtsSchemeTypeConsumer>();
-
-            //services.AddScoped<IValidator<JitToCtsRbiIfscStockDTOs>, JitToCtsRbiIfscStockValidator>();
-            //services.AddScoped<IMessageProcessor<JitToCtsRbiIfscStockDTOs>, JitToCtsRbiIfscStockQueueService>();
-            //services.AddHostedService<JitToCtsRbiIfscStockConsumer>();
+            
             // ================= ADD ACK CONSUMERS HERE ==================
 
             //Register ACK Validator
@@ -174,7 +126,8 @@ namespace documentvaultapi.Extensions
                 //MessageQueueConstants.WBJIT_CTS_BILLING_SUCCESS_BENEFICIARY_ACK,
                 //MessageQueueConstants.WBJIT_CTS_BILLING_TOKEN_ACK,
                 //MessageQueueConstants.WBJIT_CTS_BILLING_VOUCHER_ACK,
-                MessageQueueConstants.UM_APPLICATION_MAP_ACK
+                MessageQueueConstants.UM_APPLICATION_MAP_ACK,
+                MessageQueueConstants.DOCUMENT_UPLOAD_ACK
         };
             foreach (var queue in ackQueues)
             {

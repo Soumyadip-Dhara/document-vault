@@ -22,6 +22,8 @@ namespace documentvaultapi.Consumer.ConsumeAck
         private readonly IValidator<AckPayloadModel> _validator;
         private readonly IConfiguration _configuration;
         private readonly string _queueName;
+        private readonly string _virtualHostKey;
+
 
         private IConnection? _connection;
         private IChannel? _channel;
@@ -32,7 +34,8 @@ namespace documentvaultapi.Consumer.ConsumeAck
             IServiceScopeFactory scopeFactory,
             IValidator<AckPayloadModel> validator,
             IConfiguration configuration,
-            string queueName)
+            string queueName,
+            string virtualHostKey = "Default")
         {
             _logger = logger;
             _connectionFactory = connectionFactory;
@@ -40,6 +43,7 @@ namespace documentvaultapi.Consumer.ConsumeAck
             _validator = validator;
             _configuration = configuration;
             _queueName = queueName;
+            _virtualHostKey = virtualHostKey;
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -53,8 +57,8 @@ namespace documentvaultapi.Consumer.ConsumeAck
 
             try
             {
-                _connection = await _connectionFactory.CreateConnectionAsync(stoppingToken);
-                _channel = await _connectionFactory.CreateChannelAsync(stoppingToken);
+                _connection = await _connectionFactory.CreateConnectionAsync(_virtualHostKey, stoppingToken);
+                _channel = await _connectionFactory.CreateChannelAsync(_virtualHostKey, stoppingToken);
 
                 await _channel.QueueDeclareAsync(_queueName, durable: true, exclusive: false, autoDelete: false);
 

@@ -7,6 +7,10 @@ using documentvaultapi.Filters;
 using documentvaultapi.RbbitMQ;
 using documentvaultapi.RbbitMQ.Models.MQueue;
 using documentvaultapi.Common.Constants;
+using Newtonsoft.Json;
+using documentvaultapi.DAL.Entities;
+using documentvaultapi.RabbitMQ.IRepositories;
+using documentvaultapi.RbbitMQ.Services.Interfaces;
 
 namespace documentvaultapi.Controllers
 {
@@ -19,17 +23,23 @@ namespace documentvaultapi.Controllers
         private readonly IRabbitMqService _rabbitMqService;
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly IConfiguration _configuration;
+        private readonly IMessageQueueRepository _messageQueueRepository;
+        private readonly IMQueueProcessingService _mQueueProcessingService;
 
         public DocumentController(
             IDocumentService documentservice,
             IRabbitMqService rabbitMqService,
             IHttpContextAccessor httpContextAccessor,
-            IConfiguration configuration)
+            IConfiguration configuration,
+            IMessageQueueRepository messageQueueRepository,
+            IMQueueProcessingService mQueueProcessingService)
         {
             _documentservice = documentservice;
             _rabbitMqService = rabbitMqService;
             _httpContextAccessor = httpContextAccessor;
             _configuration = configuration;
+            _messageQueueRepository = messageQueueRepository;
+            _mQueueProcessingService = mQueueProcessingService;
         }
 
         [HttpPost("upload")]
@@ -107,10 +117,12 @@ namespace documentvaultapi.Controllers
                     fileContent = memoryStream.ToArray();
                 }
 
+                var message_id = Guid.NewGuid();
+
                 // Create message DTO
                 var uploadMessage = new DocumentUploadMessageDTO
                 {
-                    MessageId = Guid.NewGuid(),
+                    MessageId = message_id,
                     FileContent = fileContent,
                     FileName = request.File.FileName,
                     ContentType = request.File.ContentType,
@@ -121,11 +133,22 @@ namespace documentvaultapi.Controllers
                 };
 
                 // Publish to RabbitMQ queue
-                await _rabbitMqService.PublishAsync(
-                    MessageQueueConstants.DOCUMENT_UPLOAD_QUEUE,
-                    uploadMessage,
-                    uploadMessage.MessageId.ToString()
-                );
+                //await _rabbitMqService.PublishAsync(
+                //    MessageQueueConstants.DOCUMENT_UPLOAD_QUEUE,
+                //    uploadMessage,
+                //    uploadMessage.MessageId.ToString()
+                //);
+
+               
+                _messageQueueRepository.Add(new MessageQueue
+                {
+                    UniqueId = message_id,
+                    QueueName = MessageQueueConstants.DOCUMENT_UPLOAD_QUEUE,
+                    MessageBody = JsonConvert.SerializeObject(uploadMessage),
+                    CreatedAt = DateTime.Now
+                });
+                _messageQueueRepository.SaveChangesManaged();
+                await _mQueueProcessingService.ProcessQueueAsync(MessageQueueConstants.DOCUMENT_UPLOAD_QUEUE);
 
                 // Return response indicating queued status
                 response.apiResponseStatus = APIResponseStatus.Success;

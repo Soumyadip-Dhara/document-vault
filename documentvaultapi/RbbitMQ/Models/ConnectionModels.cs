@@ -8,4 +8,8 @@
         public string VirtualHost { get; set; } = "/";
         public int Port { get; set; } = 5672;
     }
+    public class RabbitMQMultiHostConfiguration
+    {
+        public Dictionary<string, RabbitMQConfigurationModel> Hosts { get; set; } = new();
+    }
 }
