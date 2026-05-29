@@ -22,7 +22,7 @@ namespace documentvaultapi.Controllers
         [HttpPost("upload")]
         [Consumes("multipart/form-data")]
         public async Task<APIResponseClass<DocumentUploadResponseDTO>> Upload(
-        [FromForm] DocumentUploadRequestDTO request)
+            [FromForm] DocumentUploadRequestDTO request)
         {
             APIResponseClass<DocumentUploadResponseDTO> response = new();
 

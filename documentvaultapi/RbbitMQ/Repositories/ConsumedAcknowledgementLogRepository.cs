@@ -1,8 +1,8 @@
 using documentvaultapi.DAL;
 using documentvaultapi.DAL.Entities;
 using documentvaultapi.DAL.Repositories;
-using documentvaultapi.Models.MQueue;
 using documentvaultapi.RabbitMQ.IRepositories;
+using documentvaultapi.RabbitMQ.Models.MQueue;
 
 namespace documentvaultapi.RabbitMQ.Repositories;
 

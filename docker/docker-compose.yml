@@ -256,18 +256,19 @@ services:
   # =========================
   # RabbitMQ (Message Broker)
   # =========================
-  rabbitmq:
-    image: rabbitmq:3-management
-    container_name: documentvault-rabbitmq
-    restart: unless-stopped
-    ports:
-      - "5672:5672"     # AMQP
-      - "15672:15672"   # Management UI
-    environment:
-      RABBITMQ_DEFAULT_USER: rabbitmq
-      RABBITMQ_DEFAULT_PASS: rabbitmq
-    networks:
-      - documentvault-network
+  # rabbitmq:
+  #   image: rabbitmq:3-management
+  #   container_name: documentvault-rabbitmq
+  #   restart: unless-stopped
+  #   ports:
+  #     - "5672:5672"     # AMQP
+  #     - "15672:15672"   # Management UI
+  #   environment:
+  #     RABBITMQ_DEFAULT_USER: rabbitmq
+  #     RABBITMQ_DEFAULT_PASS: rabbitmq
+
+  #   networks:
+  #     - documentvault-network
 
   # =========================
   # Document Vault API
@@ -295,7 +296,8 @@ services:
       Minio__Bucket: documents
 
       # RabbitMQ
-      RabbitMQ__Host: rabbitmq
+      RabbitMQ__Host: 10.176.100.10
+      # RabbitMQ__Host: rabbitmq
       RabbitMQ__Port: 5672
       RabbitMQ__Username: rabbitmq
       RabbitMQ__Password: rabbitmq
@@ -303,7 +305,7 @@ services:
     depends_on:
       - postgres
       - minio
-      - rabbitmq
+      # - rabbitmq
     networks:
       - documentvault-network
 

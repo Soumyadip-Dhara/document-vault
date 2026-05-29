@@ -1,11 +1,12 @@
 ﻿using System.Text;
 using System.Text.Json;
 using documentvaultapi.DAL.Entities;
-using documentvaultapi.DAL.Interfaces.MQueue;
-using documentvaultapi.DAL.Repositories.MQueue;
+//using documentvaultapi.DAL.Interfaces.MQueue;
+//using documentvaultapi.DAL.Repositories.MQueue;
 using documentvaultapi.Enum;
 using documentvaultapi.Helper;
-using documentvaultapi.RabbitMQ.Models;
+using documentvaultapi.Models.MQueue;
+using documentvaultapi.RabbitMQ.IRepositories;
 using MassTransit;
 using Microsoft.AspNetCore.SignalR.Protocol;
 using Microsoft.VisualBasic.FileIO;
@@ -309,7 +310,7 @@ namespace documentvaultapi.RbbitMQ
                 basicProperties = new BasicProperties
                 {
                     MessageId = ackMessageId,
-                    AppId = ((int)AppId.WbJitCTS).ToString(),
+                    //AppId = ((int)AppId.WbJitCTS).ToString(),
                     CorrelationId = _basicProperties.CorrelationId,
                 };
 

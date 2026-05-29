@@ -6,8 +6,17 @@ using documentvaultapi.DAL.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Minio;
 using documentvaultapi.Filters;
+using documentvaultapi.Extensions;
+using documentvaultapi.RbbitMQ;
+using documentvaultapi.RabbitMQ.IRepositories;
+using documentvaultapi.RabbitMQ.Repositories;
+using documentvaultapi.RbbitMQ.Extensions;
+using documentvaultapi.RbbitMQ.Services.Interfaces;
+using documentvaultapi.RbbitMQ.Services;
 
 var builder = WebApplication.CreateBuilder(args);
+
+
 
 // =======================
 // DbContext (EF Core 8 + PostgreSQL)
@@ -18,25 +27,55 @@ builder.Services.AddDbContext<DocumentVaultDbContext>(options =>
     ));
 
 // =======================
+// RabbitMQ
+// =======================
+builder.Services
+   .AddRabbitMQ(builder.Configuration)
+   .AddMessageProcessing();
+
+
+// =======================
+// Controllers
+// =======================
+
+builder.Services.AddControllers();
+
+// AddHttpContextAccessor
+builder.Services.AddHttpContextAccessor();
+
+
+// =======================
 // Repositories
 // =======================
 builder.Services.AddScoped<IDocumentRepository, DocumentRepository>();
 builder.Services.AddScoped<IBucketRepository, BucketRepository>();
 builder.Services.AddScoped<IApplicationMapRepository, ApplicationMapRepository>();
+//Message Queue
+builder.Services.AddTransient<IMessageQueueRepository, MessageQueueRepository>();
+builder.Services.AddTransient<IConsumeLogRepository, ConsumeLogRepository>();
+builder.Services.AddTransient<IConsumeFailedLogRepository, ConsumeFailedLogRepository>();
+builder.Services.AddTransient<IMessageQueueFailedLogsRepository, MessageQueueFailedLogsRepository>();
+builder.Services.AddTransient<IPublishedAcknowledgementLogRepository, PublishedAcknowledgementLogRepository>();
+builder.Services.AddTransient<IConsumedAcknowledgementLogRepository, ConsumedAcknowledgementLogRepository>();
+
+
 
 // =======================
 // Services
 // =======================
 builder.Services.AddScoped<IDocumentService, DocumentService>();
 builder.Services.AddScoped<IBucketService, BucketService>();
+//Queue
+builder.Services.AddTransient<IRabbitMqService, RabbitMqService>();
+builder.Services.AddTransient<IMQueueProcessingService, MQueueProcessingService>();
+//builder.Services.AddTransient<IMQueueProcessingService, MQueueProcessingService>(); // TODO: Need for publish
+// Configure Hangfire
+builder.Services.AddHangfireServices(builder.Configuration);
 
 
-// =======================
-// RabbitMQ
-// =======================
-//builder.Services
-//   .AddRabbitMQ(builder.Configuration)
-//   .AddMessageProcessing();
+
+
+
 
 
 // =======================
@@ -60,16 +99,22 @@ builder.Services.AddSingleton<IMinioClient>(sp =>
         .Build();
 });
 
+
+
+
 // =======================
-// Controllers
+// Automapper
 // =======================
-builder.Services.AddControllers();
+builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
+
 
 // =======================
 // Swagger / OpenAPI
 // =======================
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+
 
 // =======================
 // Build app
@@ -84,8 +129,9 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
-
+app.UseRouting();
 app.UseHttpsRedirection();
+app.UseRouting();
 
 app.UseAuthorization();
 

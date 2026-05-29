@@ -23,8 +23,15 @@ using documentvaultapi.DAL.DTOs;
 //using documentvaultapi.DTOs.RabbitMQ.FromMaster;
 using documentvaultapi.RabbitMQ.Models;
 using documentvaultapi.RbbitMQ;
-using documentvaultapi.RabbitMQ.Validators;
+//using documentvaultapi.RabbitMQ.Validators;
 using FluentValidation;
+using documentvaultapi.Common.Constants;
+using documentvaultapi.RabbitMQ.Services;
+using documentvaultapi.Consumer.ConsumeAck;
+using documentvaultapi.RbbitMQ.Models.MQueue.FromUM;
+using documentvaultapi.RbbitMQ.Services.FromUM;
+using documentvaultapi.RbbitMQ.Consumers;
+using documentvaultapi.RbbitMQ.Validators;
 
 namespace documentvaultapi.Extensions
 {
@@ -49,6 +56,10 @@ namespace documentvaultapi.Extensions
         public static IServiceCollection AddMessageProcessing(
             this IServiceCollection services)
         {
+            services.AddScoped<IValidator<ConsumeApplicationMapDTO>, ApplicationMapValidator>();
+            services.AddScoped<IMessageProcessor<ConsumeApplicationMapDTO>, ApplicationMapQueueService>();
+            services.AddHostedService<ApplicationMapConsumer>();
+
             //services.AddScoped<IValidator<OrderMessage>, OrderMessageValidator>();
             //services.AddScoped<IMessageProcessor<OrderMessage>, OrderMessageProcessor>();
             //services.AddHostedService<OrderConsumerService>();
@@ -140,21 +151,22 @@ namespace documentvaultapi.Extensions
             //services.AddHostedService<JitToCtsRbiIfscStockConsumer>();
             // ================= ADD ACK CONSUMERS HERE ==================
 
-            // Register ACK Validator
+            //Register ACK Validator
             services.AddSingleton<IValidator<AckPayloadModel>, MQueueAckValidator>();
 
             var ackQueues = new[]
         {
-                MessageQueueConstants.WBJIT_CTS_BILLING_BILL_STATUS_ACK,
-                MessageQueueConstants.WBJIT_CTS_BILLING_CHALLAN_ACK,
-                MessageQueueConstants.WBJIT_CTS_BILLING_DDO_ALLOTMENT_ACTUAL_AMOUNT_ACK,
-                MessageQueueConstants.WBJIT_CTS_BILLING_FAILED_BENEFICIARY_ACK,
-                MessageQueueConstants.WBJIT_CTS_BILLING_OBJECTED_BILL_ACK,
-                MessageQueueConstants.WBJIT_CTS_BILLING_PFMS_FAILED_ACK,
-                MessageQueueConstants.WBJIT_CTS_BILLING_PFMS_FILE_STATUS_DETAILS_ACK,
-                MessageQueueConstants.WBJIT_CTS_BILLING_SUCCESS_BENEFICIARY_ACK,
-                MessageQueueConstants.WBJIT_CTS_BILLING_TOKEN_ACK,
-                MessageQueueConstants.WBJIT_CTS_BILLING_VOUCHER_ACK
+                //MessageQueueConstants.WBJIT_CTS_BILLING_BILL_STATUS_ACK,
+                //MessageQueueConstants.WBJIT_CTS_BILLING_CHALLAN_ACK,
+                //MessageQueueConstants.WBJIT_CTS_BILLING_DDO_ALLOTMENT_ACTUAL_AMOUNT_ACK,
+                //MessageQueueConstants.WBJIT_CTS_BILLING_FAILED_BENEFICIARY_ACK,
+                //MessageQueueConstants.WBJIT_CTS_BILLING_OBJECTED_BILL_ACK,
+                //MessageQueueConstants.WBJIT_CTS_BILLING_PFMS_FAILED_ACK,
+                //MessageQueueConstants.WBJIT_CTS_BILLING_PFMS_FILE_STATUS_DETAILS_ACK,
+                //MessageQueueConstants.WBJIT_CTS_BILLING_SUCCESS_BENEFICIARY_ACK,
+                //MessageQueueConstants.WBJIT_CTS_BILLING_TOKEN_ACK,
+                //MessageQueueConstants.WBJIT_CTS_BILLING_VOUCHER_ACK,
+                MessageQueueConstants.UM_APPLICATION_MAP_ACK
         };
             foreach (var queue in ackQueues)
             {

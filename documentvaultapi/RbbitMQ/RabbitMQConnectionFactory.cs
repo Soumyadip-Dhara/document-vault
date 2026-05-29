@@ -4,7 +4,7 @@ using RabbitMQ.Client.Events;
 
 namespace documentvaultapi.RbbitMQ
 {
-    public class RabbitMQConnectionFactory : IRabbitMQConnectionFactory,IDisposable
+    public class RabbitMQConnectionFactory : IRabbitMQConnectionFactory, IDisposable
     {
         private readonly RabbitMQConfigurationModel _configuration;
         private readonly ILogger<RabbitMQConnectionFactory> _logger;

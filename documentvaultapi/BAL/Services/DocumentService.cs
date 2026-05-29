@@ -54,14 +54,17 @@ namespace documentvaultapi.BAL.Services
 };
 
 
+        private readonly IHttpContextAccessor _httpContextAccessor;
         public DocumentService(
             IDocumentRepository documentRepository,
             IMinioClient minioClient,
-            IConfiguration configuration)
+            IConfiguration configuration,
+            IHttpContextAccessor httpContextAccessor)
         {
             _documentRepository = documentRepository;
             _minioClient = minioClient;
             _configuration = configuration;
+            _httpContextAccessor = httpContextAccessor;
         }
 
         private static string ComputeSha256Hash(Stream stream)
@@ -76,10 +79,9 @@ namespace documentvaultapi.BAL.Services
             return hashString;
         }
 
-        public async Task<DocumentUploadResponseDTO> UploadAsync(
-    IFormFile file,
-    long? createdBy)
+        public async Task<DocumentUploadResponseDTO> UploadAsync( IFormFile file, long? createdBy)
         {
+
             // -----------------------
             // File Null validation
             // -----------------------
@@ -99,7 +101,7 @@ namespace documentvaultapi.BAL.Services
                 throw new Exception("Invalid content type.");
 
             // -----------------------
-            // (Optional) File size limit
+            // File size limit
             // -----------------------
             var maxFileSizeMb = _configuration.GetValue<int>("DocumentUpload:MaxFileSizeMB");
             var maxFileSizeBytes = maxFileSizeMb * 1024L * 1024L;
@@ -155,6 +157,15 @@ namespace documentvaultapi.BAL.Services
                     .WithObjectSize(file.Length)
                     .WithContentType(file.ContentType)
             );
+            var appIdHeader = _httpContextAccessor.HttpContext?
+            .Request.Headers["app_id"]
+            .FirstOrDefault();
+
+            if (!long.TryParse(appIdHeader, out long applicationId))
+            {
+                throw new Exception("Invalid or missing app_id header");
+            }
+
 
             var entity = new Documents
             {
@@ -164,7 +175,7 @@ namespace documentvaultapi.BAL.Services
                 OriginalFileName = file.FileName,
                 ContentType = file.ContentType,
                 FileSize = file.Length,
-                //application_id = applicationId,     TO DO LATER
+                ApplicationId = (int)applicationId,    
                 CreatedBy = createdBy,
                 FileHash = fileHash,          
                 IsActive = true

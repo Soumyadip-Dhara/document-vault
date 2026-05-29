@@ -15,6 +15,11 @@ namespace documentvaultapi.DAL.Repositories.Interfaces
 {
     public interface IRepository<T>
     {
+        Task<IDbContextTransaction> BeginTransactionAsync();
+        Task SaveChangesAManaged(T entity);
+        Task CommitTransactionAsync(IDbContextTransaction transaction);
+        Task RollbackTransactionAsync(IDbContextTransaction transaction);
+        IExecutionStrategy CreateExecutionStrategy();
         IQueryable<T> GetAllByCondition(Expression<Func<T, bool>> condition);
         Task<ICollection<T>> GetAllByConditionAsync(Expression<Func<T, bool>> condition);
 

@@ -31,6 +31,23 @@ namespace documentvaultapi.DAL.Repositories
         {
             return this.DocumentVaultDbContext.Database.CreateExecutionStrategy();
         }
+        public IExecutionStrategy CreateExecutionStrategy()
+        {
+            return this.DocumentVaultDbContext.Database.CreateExecutionStrategy();
+        }
+        public async Task<IDbContextTransaction> BeginTransactionAsync()
+        {
+            return await this.DocumentVaultDbContext.Database.BeginTransactionAsync();
+        }
+        public async Task CommitTransactionAsync(IDbContextTransaction transaction)
+        {
+            await transaction.CommitAsync();
+        }
+
+        public async Task RollbackTransactionAsync(IDbContextTransaction transaction)
+        {
+            await transaction.RollbackAsync();
+        }
 
 
         public IQueryable<T> GetAllByCondition(Expression<Func<T, bool>> condition)
@@ -60,6 +77,12 @@ namespace documentvaultapi.DAL.Repositories
             IQueryable<T> result = this.DocumentVaultDbContext.Set<T>();
             return result;
         }
+        public async Task SaveChangesAManaged(T entity)
+        {
+            this.DocumentVaultDbContext.Set<T>().Add(entity);
+            await this.DocumentVaultDbContext.SaveChangesAsync();
+        }
+
 
         public async Task<ICollection<T>> GetAllAsync()
         {

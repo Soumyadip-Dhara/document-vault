@@ -8,11 +8,11 @@ RUN dotnet restore "documentvaultapi.csproj"
 
 # Copy everything else and build
 COPY . .
-RUN dotnet build "documentvaultapi.csproj" -c Release -o /app/build
+RUN dotnet build "documentvaultapi.csproj" -c Debug -o /app/build
 
 # Publish stage
 FROM build AS publish
-RUN dotnet publish "documentvaultapi.csproj" -c Release -o /app/publish /p:UseAppHost=false
+RUN dotnet publish "documentvaultapi.csproj" -c Debug -o /app/publish /p:UseAppHost=false
 
 # Runtime stage
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS final
