@@ -32,6 +32,8 @@ using documentvaultapi.RbbitMQ.Models.MQueue.FromUM;
 using documentvaultapi.RbbitMQ.Services.FromUM;
 using documentvaultapi.RbbitMQ.Consumers;
 using documentvaultapi.RbbitMQ.Validators;
+using documentvaultapi.RbbitMQ.Models.MQueue;
+using documentvaultapi.RbbitMQ.Services;
 
 namespace documentvaultapi.Extensions
 {
@@ -56,9 +58,15 @@ namespace documentvaultapi.Extensions
         public static IServiceCollection AddMessageProcessing(
             this IServiceCollection services)
         {
+            // ApplicationMap Processing
             services.AddScoped<IValidator<ConsumeApplicationMapDTO>, ApplicationMapValidator>();
             services.AddScoped<IMessageProcessor<ConsumeApplicationMapDTO>, ApplicationMapQueueService>();
             services.AddHostedService<ApplicationMapConsumer>();
+
+            //// Document Upload Processing
+            //services.AddScoped<IValidator<DocumentUploadMessageDTO>, DocumentUploadMessageValidator>();
+            //services.AddScoped<IMessageProcessor<DocumentUploadMessageDTO>, DocumentUploadQueueService>();
+            //services.AddHostedService<DocumentUploadConsumer>();
 
             //services.AddScoped<IValidator<OrderMessage>, OrderMessageValidator>();
             //services.AddScoped<IMessageProcessor<OrderMessage>, OrderMessageProcessor>();

@@ -4,6 +4,9 @@ using documentvaultapi.Helper;
 using documentvaultapi.Enum;
 using Microsoft.AspNetCore.Mvc;
 using documentvaultapi.Filters;
+using documentvaultapi.RbbitMQ;
+using documentvaultapi.RbbitMQ.Models.MQueue;
+using documentvaultapi.Common.Constants;
 
 namespace documentvaultapi.Controllers
 {
@@ -13,10 +16,20 @@ namespace documentvaultapi.Controllers
     public class DocumentController : ControllerBase
     {
         private readonly IDocumentService _documentservice;
+        private readonly IRabbitMqService _rabbitMqService;
+        private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly IConfiguration _configuration;
 
-        public DocumentController(IDocumentService documentservice)
+        public DocumentController(
+            IDocumentService documentservice,
+            IRabbitMqService rabbitMqService,
+            IHttpContextAccessor httpContextAccessor,
+            IConfiguration configuration)
         {
             _documentservice = documentservice;
+            _rabbitMqService = rabbitMqService;
+            _httpContextAccessor = httpContextAccessor;
+            _configuration = configuration;
         }
 
         [HttpPost("upload")]
@@ -52,6 +65,83 @@ namespace documentvaultapi.Controllers
             {
                 response.apiResponseStatus = APIResponseStatus.Error;
                 response.message = ex.Message;
+            }
+
+            return response;
+        }
+
+        [HttpPost("upload-via-queue")]
+        [Consumes("multipart/form-data")]
+        public async Task<APIResponseClass<DocumentUploadResponseDTO>> UploadViaQueue(
+            [FromForm] DocumentUploadRequestDTO request)
+        {
+            APIResponseClass<DocumentUploadResponseDTO> response = new();
+
+            try
+            {
+                // Validate file
+                if (request.File == null || request.File.Length == 0)
+                {
+                    response.apiResponseStatus = APIResponseStatus.Error;
+                    response.message = "File is empty";
+                    return response;
+                }
+
+                // Get app_id from header
+                var appIdHeader = _httpContextAccessor.HttpContext?
+                    .Request.Headers["app_id"]
+                    .FirstOrDefault();
+
+                if (!int.TryParse(appIdHeader, out int applicationId))
+                {
+                    response.apiResponseStatus = APIResponseStatus.Error;
+                    response.message = "Invalid or missing app_id header";
+                    return response;
+                }
+
+                // Read file content into memory
+                byte[] fileContent;
+                using (var memoryStream = new MemoryStream())
+                {
+                    await request.File.CopyToAsync(memoryStream);
+                    fileContent = memoryStream.ToArray();
+                }
+
+                // Create message DTO
+                var uploadMessage = new DocumentUploadMessageDTO
+                {
+                    MessageId = Guid.NewGuid(),
+                    FileContent = fileContent,
+                    FileName = request.File.FileName,
+                    ContentType = request.File.ContentType,
+                    FileSize = request.File.Length,
+                    CreatedBy = request.CreatedBy,
+                    ApplicationId = applicationId,
+                    CreatedAt = DateTime.UtcNow
+                };
+
+                // Publish to RabbitMQ queue
+                await _rabbitMqService.PublishAsync(
+                    MessageQueueConstants.DOCUMENT_UPLOAD_QUEUE,
+                    uploadMessage,
+                    uploadMessage.MessageId.ToString()
+                );
+
+                // Return response indicating queued status
+                response.apiResponseStatus = APIResponseStatus.Success;
+                response.message = "Document upload queued for processing";
+                response.result = new DocumentUploadResponseDTO
+                {
+                    DocumentId = uploadMessage.MessageId,
+                    FileName = request.File.FileName,
+                    Status = "Queued",
+                    Hash = ""
+                };
+            }
+            catch (Exception ex)
+            {
+                response.apiResponseStatus = APIResponseStatus.Error;
+                response.message = $"Error queuing document upload: {ex.Message}";
             }
 
             return response;
