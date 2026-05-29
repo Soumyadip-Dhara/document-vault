@@ -13,6 +13,7 @@ using documentvaultapi.RabbitMQ.Repositories;
 using documentvaultapi.RbbitMQ.Extensions;
 using documentvaultapi.RbbitMQ.Services.Interfaces;
 using documentvaultapi.RbbitMQ.Services;
+using Microsoft.Extensions.DependencyInjection;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -70,7 +71,7 @@ builder.Services.AddTransient<IRabbitMqService, RabbitMqService>();
 builder.Services.AddTransient<IMQueueProcessingService, MQueueProcessingService>();
 //builder.Services.AddTransient<IMQueueProcessingService, MQueueProcessingService>(); // TODO: Need for publish
 // Configure Hangfire
-builder.Services.AddHangfireServices(builder.Configuration);
+//builder.Services.AddHangfireServices(builder.Configuration);
 
 
 
@@ -105,8 +106,7 @@ builder.Services.AddSingleton<IMinioClient>(sp =>
 // =======================
 // Automapper
 // =======================
-builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
-
+builder.Services.AddAutoMapper(typeof(Program));
 
 // =======================
 // Swagger / OpenAPI

@@ -2,6 +2,6 @@
 {
     public interface IMQueueProcessingService
     {
-        Task ProcessQueueAsync(string queueName);
+        Task ProcessQueueAsync(string queueName, string? correlationId = "");
     }
 }

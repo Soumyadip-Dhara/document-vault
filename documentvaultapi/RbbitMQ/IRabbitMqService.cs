@@ -13,7 +13,7 @@ namespace documentvaultapi.RbbitMQ
         Task<string> GetPayloadRabbitMQAsync<T>(string queueName);
 
         Task PublishAsync<T>(string routingKey, T message, string queueId, string exchange = "") where T : class;
-        Task<string> PushMessageAsync(string queueName, string message, string queueId, string exchange = "");
+        Task<string> PushMessageAsync(string queueName, string message, string queueId, string exchange = "", string? correlationId = "");
     }
 
 }

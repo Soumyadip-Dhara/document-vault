@@ -1,8 +1,6 @@
 ﻿using System.Text;
 using System.Text.Json;
 using documentvaultapi.DAL.Entities;
-//using documentvaultapi.DAL.Interfaces.MQueue;
-//using documentvaultapi.DAL.Repositories.MQueue;
 using documentvaultapi.Enum;
 using documentvaultapi.Helper;
 using documentvaultapi.Models.MQueue;
@@ -74,6 +72,8 @@ namespace documentvaultapi.RbbitMQ
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
+            _logger.LogInformation("DocumentUploadConsumer started");
+
             while (!stoppingToken.IsCancellationRequested)
             {
                 try
@@ -96,7 +96,6 @@ namespace documentvaultapi.RbbitMQ
         {
             _connection = await _connectionFactory.CreateConnectionAsync(_virtualHostKey, stoppingToken);
             _channel = await _connectionFactory.CreateChannelAsync(_virtualHostKey, stoppingToken);
-
 
             // Configure channel
             await _channel.QueueDeclareAsync(_queueName,
@@ -129,10 +128,10 @@ namespace documentvaultapi.RbbitMQ
             var consumer = new AsyncEventingBasicConsumer(_channel);
             consumer.ReceivedAsync += HandleMessageAsync;
 
-            await _channel.BasicConsumeAsync(
-                queue: _queueName,
-                autoAck: false,
-                consumer: consumer);
+            var consumerTag = await _channel.BasicConsumeAsync(
+                 queue: _queueName,
+                 autoAck: false,
+                 consumer: consumer);
 
             // Keep the connection alive until cancellation is requested
             try
@@ -148,6 +147,9 @@ namespace documentvaultapi.RbbitMQ
 
         private async Task HandleMessageAsync(object? sender, BasicDeliverEventArgs ea)
         {
+
+            _logger.LogError("1 - MESSAGE RECEIVED");
+            
             _newConsumeLog.Reset();
             _newConsumeLog.ConsumedAt = DateTime.Now;
             using var scope = _serviceScopeFactory.CreateScope();
@@ -160,6 +162,8 @@ namespace documentvaultapi.RbbitMQ
             try
             {
                 var message = Encoding.UTF8.GetString(ea.Body.Span);
+
+
                 var isRedelivered = ea.Redelivered;
                 _newConsumeLog.IsRedelivered = isRedelivered;
                 _newConsumeLog.MessageBody = message;
@@ -169,23 +173,25 @@ namespace documentvaultapi.RbbitMQ
                     _ackQueueName = ea.BasicProperties.ReplyTo;
                 }
                 _logger.LogInformation("Processing message. Redelivered: {IsRedelivered}", isRedelivered);
-                if (await ProcessMessageAsync())
+                _logger.LogInformation("Message received");
+
+                var result = await ProcessMessageAsync();
+
+
+                if (result)
                 {
-                    await _channel.BasicAckAsync(ea.DeliveryTag, false)!;
+                    await _channel!.BasicAckAsync(ea.DeliveryTag, false);
+
                 }
                 else
                 {
-                    await _channel.BasicNackAsync(ea.DeliveryTag, false, !isRedelivered)!;
+                    await _channel!.BasicNackAsync(ea.DeliveryTag, false, !isRedelivered);
                 }
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "HANDLE MESSAGE ERROR");
                 await FailedProcess("ProcessingError", ex.ToString(), false, ConsumeStatusEnums.PENDING);
-                // Ensure the message is NACKed even if an exception occurs
-                if (_channel != null)
-                {
-                    await _channel.BasicNackAsync(ea.DeliveryTag, false, false);
-                }
             }
         }
 
@@ -239,7 +245,7 @@ namespace documentvaultapi.RbbitMQ
             }
             catch (Exception ex)
             {
-                await FailedProcess("ProcessingError", ex.Message, true, ConsumeStatusEnums.NO_ACTION);
+                await FailedProcess("ProcessingError", ex.Message, false, ConsumeStatusEnums.NO_ACTION);
                 return true;
             }
         }
@@ -319,7 +325,7 @@ namespace documentvaultapi.RbbitMQ
                 basicProperties = new BasicProperties
                 {
                     MessageId = ackMessageId,
-                    AppId = "1", // HardCoded for UserManagement
+                    AppId = "9999", // HardCoded for Document Stroage
                     CorrelationId = _basicProperties.CorrelationId,
                 };
 

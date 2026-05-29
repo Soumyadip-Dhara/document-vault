@@ -5,6 +5,7 @@ using System.Collections.Concurrent;
 
 namespace documentvaultapi.RbbitMQ
 {
+
     public class RabbitMQConnectionFactory : IRabbitMQConnectionFactory, IDisposable
     {
         private readonly RabbitMQMultiHostConfiguration _multiConfig;
@@ -12,59 +13,21 @@ namespace documentvaultapi.RbbitMQ
         private readonly ConcurrentDictionary<string, IConnection> _connections = new();
         private readonly ConcurrentDictionary<string, SemaphoreSlim> _locks = new();
 
+
         public RabbitMQConnectionFactory(
             RabbitMQMultiHostConfiguration multiConfig,
             ILogger<RabbitMQConnectionFactory> logger)
         {
-            _logger = logger;
             _multiConfig = multiConfig;
+            _logger = logger;
         }
 
-        //public async Task<IConnection> CreateConnectionAsync(CancellationToken cancellationToken = default)
-        //{
-        //    if (_connection?.IsOpen == true)
-        //        return _connection;
-
-        //    await _connectionLock.WaitAsync(cancellationToken);
-        //    try
-        //    {
-        //        if (_connection?.IsOpen == true)
-        //            return _connection;
-
-        //        var factory = new ConnectionFactory
-        //        {
-        //            HostName = _configuration.Host,
-        //            UserName = _configuration.UserName,
-        //            Password = _configuration.Password,
-        //            VirtualHost = _configuration.VirtualHost,
-        //            Port = _configuration.Port,
-        //            ConsumerDispatchConcurrency = 1
-        //        };
-
-        //        _connection = await factory.CreateConnectionAsync(cancellationToken);
-        //        _logger.LogInformation("Successfully connected to RabbitMQ");
-
-        //        _connection.ConnectionShutdownAsync += OnConnectionShutdown;
-
-        //        return _connection;
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        _logger.LogError(ex, "Failed to connect to RabbitMQ");
-        //        throw;
-        //    }
-        //    finally
-        //    {
-        //        _connectionLock.Release();
-        //    }
-        //}
-
+        // Default overloads — delegate to "Default" key
         public Task<IConnection> CreateConnectionAsync(CancellationToken cancellationToken = default)
-           => CreateConnectionAsync("Default", cancellationToken);
+            => CreateConnectionAsync("Default", cancellationToken);
 
         public Task<IChannel> CreateChannelAsync(CancellationToken cancellationToken = default)
             => CreateChannelAsync("Default", cancellationToken);
-
 
         public async Task<IConnection> CreateConnectionAsync(string hostKey, CancellationToken cancellationToken = default)
 
@@ -122,7 +85,6 @@ namespace documentvaultapi.RbbitMQ
                 lockObj.Release();
             }
         }
-
 
         public async Task<IChannel> CreateChannelAsync(string hostKey, CancellationToken cancellationToken = default)
         {

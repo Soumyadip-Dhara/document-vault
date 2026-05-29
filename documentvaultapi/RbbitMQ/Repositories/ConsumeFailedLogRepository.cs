@@ -20,21 +20,21 @@ namespace documentvaultapi.RabbitMQ.Repositories
         }
         public async Task InsertNewLog(NewConsumeLogModel newConsumeLog)
         {
-            ConsumeFailedLog consumeLog = _mapper.Map<ConsumeFailedLog>(newConsumeLog);
-            //ConsumeFailedLog consumeFailedLog = new ConsumeFailedLog
-            //{
-            //    MessageId = Guid.Parse(newConsumeLog.MessageId),
-            //    QueueName = newConsumeLog.QueueName,
-            //    ActionStatus = newConsumeLog.ActionStatus,
-            //    ConsumedAt = newConsumeLog.ConsumedAt,
-            //    FailedAt = newConsumeLog.FailedAt,
-            //    ExchangeName = newConsumeLog.ExchangeName,
-            //    FailedMessage = newConsumeLog.FailedMessage,
-            //    FailedType = newConsumeLog.FailedType,
-            //    RaoutingKey = newConsumeLog.RaoutingKey,
-            //    MessageBody = newConsumeLog.MessageBody,
-            //};
-            await _dbContext.ConsumeFailedLogs.AddAsync(consumeLog);
+            //ConsumeFailedLog consumeLog = _mapper.Map<ConsumeFailedLog>(newConsumeLog);
+            ConsumeFailedLog consumeFailedLog = new ConsumeFailedLog
+            {
+                MessageId = newConsumeLog.MessageId,
+                QueueName = newConsumeLog.QueueName,
+                ActionStatus = newConsumeLog.ActionStatus,
+                ConsumedAt = newConsumeLog.ConsumedAt,
+                FailedAt = newConsumeLog.FailedAt,
+                ExchangeName = newConsumeLog.ExchangeName,
+                FailedMessage = newConsumeLog.FailedMessage,
+                FailedType = newConsumeLog.FailedType,
+                RoutingKey = newConsumeLog.RaoutingKey,
+                MessageBody = newConsumeLog.MessageBody,
+            };
+            await _dbContext.ConsumeFailedLogs.AddAsync(consumeFailedLog);
             await _dbContext.SaveChangesAsync();
         }
     }

@@ -1,13 +1,4 @@
-﻿//namespace documentvaultapi.RbbitMQ.Models.MQueue
-//{
-//    public class MQueueProcessingService
-//    {
-//    }
-//}
-//using documentvaultapi.BAL.Interfaces.MQueue;
-//using documentvaultapi.DAL.Interfaces.MQueue;
-//using documentvaultapi.DAL.Repositories.MQueue;
-using documentvaultapi.RbbitMQ;
+﻿using documentvaultapi.RbbitMQ;
 using documentvaultapi.RabbitMQ.IRepositories;
 using documentvaultapi.RbbitMQ.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
@@ -27,7 +18,7 @@ namespace documentvaultapi.RbbitMQ.Services
             _configuration = configuration;
             _rabbitMqService = rabbitMqService;
         }
-        public async Task ProcessQueueAsync(string queueName)
+        public async Task ProcessQueueAsync(string queueName, string? correlationId = "")
         {
             var strategy = _messageQueueRepository.CreateExecutionStrategy();
             await strategy.ExecuteAsync(async () =>
@@ -55,7 +46,7 @@ namespace documentvaultapi.RbbitMQ.Services
                         await _messageQueueRepository.RemoveRecordAsync(record.UniqueId);
 
                         // Publish each record to RabbitMQ
-                        await _rabbitMqService.PushMessageAsync(record.QueueName, record.MessageBody, record.UniqueId.ToString());
+                        await _rabbitMqService.PushMessageAsync(record.QueueName, record.MessageBody, record.UniqueId.ToString(), "", correlationId);
                         //RabitMQProducer producer = new RabitMQProducer();
 
                         //await producer.PushMessage(_configuration["RabbitMQConnection:Host"],

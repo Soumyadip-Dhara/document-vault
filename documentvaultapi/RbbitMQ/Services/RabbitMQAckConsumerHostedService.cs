@@ -1,5 +1,4 @@
 ﻿using documentvaultapi.Consumer.ConsumeAck;
-//using documentvaultapi.Consumer.MasterConsumer;
 using documentvaultapi.RbbitMQ;
 using FluentValidation;
 
@@ -13,6 +12,7 @@ namespace documentvaultapi.RabbitMQ.Services
         private readonly IValidator<AckPayloadModel> _validator;
         private readonly IConfiguration _configuration;
         private readonly string _queueName;
+        private readonly string _virtualHostKey;
 
         private RabbitMQAckConsumer? _consumer;
 
@@ -22,7 +22,8 @@ namespace documentvaultapi.RabbitMQ.Services
             IServiceScopeFactory scopeFactory,
             IValidator<AckPayloadModel> validator,
             IConfiguration configuration,
-            string queueName)
+            string queueName,
+            string virtualHostKey = "Default")
         {
             _logger = logger;
             _connectionFactory = connectionFactory;
@@ -30,6 +31,7 @@ namespace documentvaultapi.RabbitMQ.Services
             _queueName = queueName;
             _validator = validator;
             _configuration = configuration;
+            _virtualHostKey = virtualHostKey;
         }
 
         protected override Task ExecuteAsync(CancellationToken stoppingToken)
@@ -40,7 +42,8 @@ namespace documentvaultapi.RabbitMQ.Services
                 _scopeFactory,
                 _validator,
                 _configuration,
-                _queueName);
+                _queueName,
+                _virtualHostKey);
 
             return _consumer.StartAsync(stoppingToken);
         }

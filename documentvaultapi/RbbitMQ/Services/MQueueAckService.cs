@@ -1,11 +1,4 @@
 ﻿using AutoMapper;
-//using ctsapi.DAL.Entities;
-//using ctsapi.DAL.Interfaces.Billing;
-//using ctsapi.DAL.Interfaces.MQueue;
-//using ctsapi.DTOs.RabbitMQ;
-//using ctsapi.DTOs.RabbitMQ.FromBilling.NewBill;
-//using ctsapi.Enums;
-//using ctsapi.RbbitMQ;
 using documentvaultapi.Enum;
 using documentvaultapi.RabbitMQ.IRepositories;
 using documentvaultapi.RbbitMQ;

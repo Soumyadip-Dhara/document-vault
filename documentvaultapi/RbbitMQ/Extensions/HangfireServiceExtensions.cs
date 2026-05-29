@@ -12,25 +12,25 @@ namespace documentvaultapi.RbbitMQ.Extensions
         // ===============================
         // 1. Register Hangfire Services
         // ===============================
-        public static IServiceCollection AddHangfireServices(
-            this IServiceCollection services,
-            IConfiguration configuration)
-        {
-            services.AddHangfire(config => config
-                .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
-                .UseSimpleAssemblyNameTypeSerializer()
-                .UseRecommendedSerializerSettings()
-                .UsePostgreSqlStorage(
-                    configuration.GetConnectionString("DocumentVaultDB"),
-                    new PostgreSqlStorageOptions
-                    {
-                        SchemaName = "hangfire"
-                    }));
+        //public static IServiceCollection AddHangfireServices(
+        //    this IServiceCollection services,
+        //    IConfiguration configuration)
+        //{
+        //    services.AddHangfire(config => config
+        //        .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
+        //        .UseSimpleAssemblyNameTypeSerializer()
+        //        .UseRecommendedSerializerSettings()
+        //        .UsePostgreSqlStorage(
+        //            configuration.GetConnectionString("DocumentVaultDB"),
+        //            new PostgreSqlStorageOptions
+        //            {
+        //                SchemaName = "hangfire"
+        //            }));
 
-            services.AddHangfireServer();
+        //    services.AddHangfireServer();
 
-            return services;
-        }
+        //    return services;
+        //}
 
         // ===============================
         // 2. Configure Hangfire Middleware

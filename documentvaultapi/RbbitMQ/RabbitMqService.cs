@@ -1,3 +1,4 @@
+using documentvaultapi.RabbitMQ.Models;
 using MassTransit;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
@@ -7,18 +8,26 @@ namespace documentvaultapi.RbbitMQ
 {
     public class RabbitMqService : IRabbitMqService
     {
-        private readonly IConfiguration _configuration;
+        //private readonly IConfiguration _configuration;
         private readonly ConnectionFactory _factory;
 
-        public RabbitMqService(IConfiguration configuration)
+        public RabbitMqService(RabbitMQMultiHostConfiguration multiConfig)
         {
-            _configuration = configuration;
+            if (!multiConfig.Hosts.TryGetValue("Default", out var configuration))
+            {
+                throw new InvalidOperationException("RabbitMQ 'Default' host configuration is missing.");
+            }
+
+
+            //_configuration = configuration;
             _factory = new ConnectionFactory()
             {
-                HostName = _configuration["RabbitMQConnection:Host"],
-                Port = int.Parse(_configuration["RabbitMQConnection:Port"]),
-                UserName = _configuration["RabbitMQConnection:UserName"],
-                Password = _configuration["RabbitMQConnection:Password"],
+                HostName = configuration.Host,
+                Port = configuration.Port,
+                UserName = configuration.UserName,
+                Password = configuration.Password,
+                VirtualHost = configuration.VirtualHost,
+
             };
         }
         public async Task PublishAsync<T>(string routingKey, T message, string exchange = "") where T : class
@@ -88,7 +97,7 @@ namespace documentvaultapi.RbbitMQ
                 }
             });
         }
-        public async Task<string> PushMessageAsync(string queueName, string message, string queueId, string exchange = "")
+        public async Task<string> PushMessageAsync(string queueName, string message, string queueId, string exchange = "", string? correlationId = "")
         {
 
             using (IConnection connection = await _factory.CreateConnectionAsync())
@@ -96,6 +105,12 @@ namespace documentvaultapi.RbbitMQ
                 using IChannel channel = await connection.CreateChannelAsync();
                 var properties = new BasicProperties();
                 properties.MessageId = queueId;
+                if (correlationId != null)
+                {
+                    properties.CorrelationId = correlationId;
+                }
+
+                properties.AppId = "1"; // Hardcoded For User Management
                 await channel.QueueDeclareAsync(queueName, durable: true, exclusive: false, autoDelete: false);
                 byte[] messageBytes = Encoding.UTF8.GetBytes(message);
                 await channel.BasicPublishAsync(exchange: exchange, routingKey: queueName, mandatory: true, basicProperties: properties, body: messageBytes);
